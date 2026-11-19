@@ -15,9 +15,9 @@ public class AnketController : Controller
     }
 
     // Anket listesi
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
-        var anketler = await _repo.TumunuGetirAsync();
+        var anketler = _repo.TumunuGetir();
         return View(anketler);
     }
 
@@ -28,20 +28,20 @@ public class AnketController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Ekle(AnketFormModel model)
+    public IActionResult Ekle(AnketFormModel model)
     {
         if (!ModelState.IsValid)
             return View(model);
 
-        int yeniId = await _repo.EkleAsync(model);
+        int yeniId = _repo.Ekle(model);
         TempData["Mesaj"] = "Anket oluşturuldu. Şimdi soru ekleyebilirsiniz.";
         return RedirectToAction("Detay", new { id = yeniId });
     }
 
     // Anket düzenleme formu
-    public async Task<IActionResult> Duzenle(int id)
+    public IActionResult Duzenle(int id)
     {
-        var anket = await _repo.GetirAsync(id);
+        var anket = _repo.Getir(id);
         if (anket == null)
             return NotFound();
 
@@ -54,12 +54,12 @@ public class AnketController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Duzenle(AnketFormModel model)
+    public IActionResult Duzenle(AnketFormModel model)
     {
         if (!ModelState.IsValid)
             return View(model);
 
-        bool guncellendi = await _repo.GuncelleAsync(model);
+        bool guncellendi = _repo.Guncelle(model);
         if (!guncellendi)
             return NotFound();
 
@@ -68,9 +68,9 @@ public class AnketController : Controller
     }
 
     // Anketin soruları ve soru ekleme formu
-    public async Task<IActionResult> Detay(int id)
+    public IActionResult Detay(int id)
     {
-        var model = await DetayModeliGetir(id);
+        var model = DetayModeliGetir(id);
         if (model == null)
             return NotFound();
 
@@ -78,7 +78,7 @@ public class AnketController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> SoruEkle(AnketDetayModel gelen)
+    public IActionResult SoruEkle(AnketDetayModel gelen)
     {
         var yeniSoru = gelen.YeniSoru;
         var secenekler = yeniSoru.SecenekListesi();
@@ -88,20 +88,20 @@ public class AnketController : Controller
 
         if (!ModelState.IsValid)
         {
-            var model = await DetayModeliGetir(yeniSoru.AnketId);
+            var model = DetayModeliGetir(yeniSoru.AnketId);
             model.YeniSoru = yeniSoru;
             return View("Detay", model);
         }
 
-        await _repo.SoruEkleAsync(yeniSoru.AnketId, yeniSoru.Metin, secenekler);
+        _repo.SoruEkle(yeniSoru.AnketId, yeniSoru.Metin, secenekler);
         TempData["Mesaj"] = "Soru eklendi.";
         return RedirectToAction("Detay", new { id = yeniSoru.AnketId });
     }
 
     // Anket doldurma sayfası
-    public async Task<IActionResult> Doldur(int id)
+    public IActionResult Doldur(int id)
     {
-        var model = await DetayModeliGetir(id);
+        var model = DetayModeliGetir(id);
         if (model == null)
             return NotFound();
 
@@ -115,9 +115,9 @@ public class AnketController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Doldur(int id, Dictionary<int, int> cevaplar)
+    public IActionResult Doldur(int id, Dictionary<int, int> cevaplar)
     {
-        var model = await DetayModeliGetir(id);
+        var model = DetayModeliGetir(id);
         if (model == null)
             return NotFound();
 
@@ -134,7 +134,7 @@ public class AnketController : Controller
 
         try
         {
-            await _repo.CevaplariKaydetAsync(cevaplar);
+            _repo.CevaplariKaydet(cevaplar);
         }
         catch (SqlException ex)
         {
@@ -148,28 +148,28 @@ public class AnketController : Controller
     }
 
     // Sonuçlar sayfası
-    public async Task<IActionResult> Sonuclar(int id)
+    public IActionResult Sonuclar(int id)
     {
-        var anket = await _repo.GetirAsync(id);
+        var anket = _repo.Getir(id);
         if (anket == null)
             return NotFound();
 
         var model = new AnketSonucModel();
         model.Anket = anket;
-        model.Satirlar = await _repo.SonuclariGetirAsync(id);
+        model.Satirlar = _repo.SonuclariGetir(id);
         return View(model);
     }
 
     // Detay ve Doldur sayfaları aynı bilgileri kullandığı için ortak metot
-    private async Task<AnketDetayModel> DetayModeliGetir(int id)
+    private AnketDetayModel DetayModeliGetir(int id)
     {
-        var anket = await _repo.GetirAsync(id);
+        var anket = _repo.Getir(id);
         if (anket == null)
             return null;
 
         var model = new AnketDetayModel();
         model.Anket = anket;
-        model.Sorular = await _repo.SorulariGetirAsync(id);
+        model.Sorular = _repo.SorulariGetir(id);
         model.YeniSoru = new SoruEkleModel();
         model.YeniSoru.AnketId = id;
         return model;
