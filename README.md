@@ -29,7 +29,7 @@ Prosedürler:
 - `sp_SecenekEkle`
 - `sp_CevapKaydet` : cevabı kaydetmeden önce seçenek o soruya ait mi, anket aktif mi diye kontrol ediyor. Değilse THROW ile hata dönüyor.
 
-C# tarafında veritabanı işlemlerini `AnketRepository` sınıfında topladım. Repository'yi `Program.cs` içinde DI'a ekledim, controller constructor'dan alıyor. Bir soruyu seçenekleriyle birlikte eklerken ve anket cevaplarını kaydederken transaction kullandım, yarıda hata olursa yarım kayıt kalmasın diye.
+C# tarafında veritabanı işlemlerini `AnketRepository` sınıfında topladım. Bir soruyu seçenekleriyle birlikte eklerken ve anket cevaplarını kaydederken transaction kullandım, yarıda hata olursa yarım kayıt kalmasın diye.
 
 ## Tablolar
 
@@ -58,7 +58,6 @@ dotnet run
 - Dapper'ın kolon adlarını sınıfın property'leriyle nasıl eşlediği
 - Foreign key'lerin hangi tabloya yazılacağı ve tabloların hangi sırayla oluşturulup silineceği
 - Transaction kullanımı
-- ASP.NET Core'da dependency injection
 
 ## İleride eklemek istediklerim
 
