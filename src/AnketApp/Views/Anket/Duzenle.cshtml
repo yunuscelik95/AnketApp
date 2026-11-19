@@ -1,0 +1,17 @@
+@model AnketFormModel
+@{
+    ViewData["Title"] = "Anketi Düzenle";
+}
+
+<h1 class="h3 mb-3">Anketi Düzenle</h1>
+<form asp-action="Duzenle" method="post" class="col-lg-6">
+    <partial name="_AnketForm" model="Model" />
+    <div class="form-check mb-3">
+        <input asp-for="Aktif" class="form-check-input" />
+        <label asp-for="Aktif" class="form-check-label"></label>
+    </div>
+    <button type="submit" class="btn btn-primary">Güncelle</button>
+    <a asp-action="Index" class="btn btn-link">Vazgeç</a>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

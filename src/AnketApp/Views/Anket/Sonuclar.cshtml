@@ -1,0 +1,37 @@
+@model AnketSonucModel
+@{
+    ViewData["Title"] = "Sonuçlar - " + Model.Anket.Ad;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">@Model.Anket.Ad — Sonuçlar</h1>
+    <a class="btn btn-outline-secondary" asp-action="Detay" asp-route-id="@Model.Anket.Id">Ankete dön</a>
+</div>
+
+@if (!Model.Satirlar.Any())
+{
+    <p class="text-muted">Bu ankette henüz soru yok.</p>
+}
+
+@foreach (var soru in Model.Satirlar.GroupBy(x => new { x.SoruId, x.SoruMetni, x.Sira }))
+{
+    var toplam = soru.Sum(x => x.CevapSayisi);
+    <div class="card mb-3">
+        <div class="card-body">
+            <h2 class="h6">@soru.Key.Sira. @soru.Key.SoruMetni <span class="text-muted fw-normal">(@toplam cevap)</span></h2>
+            @foreach (var s in soru)
+            {
+                var yuzde = toplam == 0 ? 0 : (int)Math.Round(100.0 * s.CevapSayisi / toplam);
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between small">
+                        <span>@s.SecenekMetni</span>
+                        <span>@s.CevapSayisi (%@yuzde)</span>
+                    </div>
+                    <div class="progress" role="progressbar" aria-valuenow="@yuzde" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar" style="width: @(yuzde)%"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

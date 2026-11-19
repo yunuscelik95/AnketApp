@@ -1,0 +1,64 @@
+@model IEnumerable<Anket>
+@{
+    ViewData["Title"] = "Anketler";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Anketler</h1>
+    <a class="btn btn-primary" asp-action="Ekle">+ Yeni Anket</a>
+</div>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz anket yok.</p>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Anket</th>
+                <th class="text-center">Soru</th>
+                <th class="text-center">Cevap</th>
+                <th>Durum</th>
+                <th>Oluşturma</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in Model)
+            {
+                <tr>
+                    <td>
+                        <a asp-action="Detay" asp-route-id="@a.Id" class="fw-semibold">@a.Ad</a>
+                        @if (!string.IsNullOrEmpty(a.Aciklama))
+                        {
+                            <div class="small text-muted">@a.Aciklama</div>
+                        }
+                    </td>
+                    <td class="text-center">@a.SoruSayisi</td>
+                    <td class="text-center">@a.CevapSayisi</td>
+                    <td>
+                        @if (a.Aktif)
+                        {
+                            <span class="badge bg-success">Aktif</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Pasif</span>
+                        }
+                    </td>
+                    <td>@a.OlusturmaTarihi.ToString("dd.MM.yyyy")</td>
+                    <td class="text-end text-nowrap">
+                        @if (a.Aktif && a.SoruSayisi > 0)
+                        {
+                            <a class="btn btn-sm btn-success" asp-action="Doldur" asp-route-id="@a.Id">Doldur</a>
+                        }
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Sonuclar" asp-route-id="@a.Id">Sonuçlar</a>
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Duzenle" asp-route-id="@a.Id">Düzenle</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

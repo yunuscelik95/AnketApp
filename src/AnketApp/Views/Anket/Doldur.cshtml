@@ -1,0 +1,37 @@
+@model AnketDetayModel
+@{
+    ViewData["Title"] = Model.Anket.Ad;
+    var secilenler = ViewData["Secilenler"] as Dictionary<int, int> ?? new();
+}
+
+<h1 class="h3">@Model.Anket.Ad</h1>
+@if (!string.IsNullOrEmpty(Model.Anket.Aciklama))
+{
+    <p class="text-muted">@Model.Anket.Aciklama</p>
+}
+@if (ViewData["Hata"] is string hata)
+{
+    <div class="alert alert-danger">@hata</div>
+}
+
+<form asp-action="Doldur" asp-route-id="@Model.Anket.Id" method="post" class="col-lg-8">
+    @foreach (var soru in Model.Sorular)
+    {
+        <fieldset class="card mb-3">
+            <div class="card-body">
+                <legend class="h6">@soru.Sira. @soru.Metin</legend>
+                @foreach (var s in soru.Secenekler)
+                {
+                    var elemanId = "secenek_" + s.Id;
+                    var secili = secilenler.TryGetValue(soru.Id, out var sid) && sid == s.Id;
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" id="@elemanId"
+                               name="cevaplar[@soru.Id]" value="@s.Id" checked="@secili" />
+                        <label class="form-check-label" for="@elemanId">@s.Metin</label>
+                    </div>
+                }
+            </div>
+        </fieldset>
+    }
+    <button type="submit" class="btn btn-success">Gönder</button>
+</form>

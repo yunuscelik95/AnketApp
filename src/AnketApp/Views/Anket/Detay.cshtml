@@ -1,0 +1,66 @@
+@model AnketDetayModel
+@{
+    ViewData["Title"] = Model.Anket.Ad;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h1 class="h3 mb-0">@Model.Anket.Ad</h1>
+    <div>
+        @if (Model.Anket.Aktif && Model.Sorular.Any())
+        {
+            <a class="btn btn-success" asp-action="Doldur" asp-route-id="@Model.Anket.Id">Anketi Doldur</a>
+        }
+        <a class="btn btn-outline-primary" asp-action="Sonuclar" asp-route-id="@Model.Anket.Id">Sonuçlar</a>
+    </div>
+</div>
+@if (!string.IsNullOrEmpty(Model.Anket.Aciklama))
+{
+    <p class="text-muted">@Model.Anket.Aciklama</p>
+}
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-7">
+        <h2 class="h5">Sorular (@Model.Sorular.Count)</h2>
+        @if (!Model.Sorular.Any())
+        {
+            <p class="text-muted">Bu ankette henüz soru yok. Sağdaki formdan ekleyin.</p>
+        }
+        @foreach (var soru in Model.Sorular)
+        {
+            <div class="card mb-2">
+                <div class="card-body py-2">
+                    <div class="fw-semibold">@soru.Sira. @soru.Metin</div>
+                    <ul class="mb-0 small">
+                        @foreach (var s in soru.Secenekler)
+                        {
+                            <li>@s.Metin</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="h5">Soru Ekle</h2>
+                <form asp-action="SoruEkle" method="post">
+                    <input type="hidden" asp-for="YeniSoru.AnketId" />
+                    <div class="mb-3">
+                        <label asp-for="YeniSoru.Metin" class="form-label"></label>
+                        <input asp-for="YeniSoru.Metin" class="form-control" />
+                        <span asp-validation-for="YeniSoru.Metin" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="YeniSoru.SeceneklerMetni" class="form-label"></label>
+                        <textarea asp-for="YeniSoru.SeceneklerMetni" class="form-control" rows="4"
+                                  placeholder="Evet&#10;Hayır"></textarea>
+                        <span asp-validation-for="YeniSoru.SeceneklerMetni" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Soruyu Ekle</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
