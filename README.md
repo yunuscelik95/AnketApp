@@ -1,75 +1,67 @@
 # AnketApp
 
-ASP.NET Core MVC, Dapper ve MSSQL ile geliştirilmiş basit bir anket uygulaması.
-Anket oluşturulur, sorular ve seçenekler eklenir, anket doldurulur, sonuçlar yüzde olarak gösterilir.
+ASP.NET Core MVC ve Dapper öğrenmek için yaptığım küçük bir anket uygulaması. Veritabanı olarak MSSQL kullandım.
 
-## Kullanılan teknolojiler
+İş yerinde de anket projeleri üzerinde çalıştığım için konuyu tanıdık bir şey seçtim. Uygulamada anket oluşturuluyor, ankete soru ve seçenek ekleniyor, anket dolduruluyor ve sonuçlar yüzde olarak gösteriliyor.
 
-- .NET 8, ASP.NET Core MVC
-- Dapper (micro ORM), Microsoft.Data.SqlClient
+## Kullandıklarım
+
+- .NET 8 / ASP.NET Core MVC
+- Dapper
 - MSSQL (SQL Server Express)
-- Bootstrap 5
+- Bootstrap
 
-## Mimari
+## Nasıl çalışıyor
+
+Projede kendime şöyle bir kural koydum:
+
+- SELECT sorgularının hepsi view üzerinden
+- INSERT ve UPDATE işlemlerinin hepsi stored procedure ile
+
+View'lar:
+- `vw_AnketListesi` : anketler, soru ve cevap sayılarıyla
+- `vw_AnketSorulari` : bir anketin soruları ve seçenekleri
+- `vw_AnketSonuclari` : her seçeneğin kaç kere seçildiği
+
+Prosedürler:
+- `sp_AnketEkle`, `sp_AnketGuncelle`
+- `sp_SoruEkle`, `sp_SoruGuncelle`
+- `sp_SecenekEkle`
+- `sp_CevapKaydet` : cevabı kaydetmeden önce seçenek o soruya ait mi, anket aktif mi diye kontrol ediyor. Değilse THROW ile hata dönüyor.
+
+C# tarafında veritabanı işlemlerini `AnketRepository` sınıfında topladım. Repository'yi `Program.cs` içinde DI'a ekledim, controller constructor'dan alıyor. Bir soruyu seçenekleriyle birlikte eklerken ve anket cevaplarını kaydederken transaction kullandım, yarıda hata olursa yarım kayıt kalmasın diye.
+
+## Tablolar
+
+- **Anketler**
+- **Sorular** (Anketler'e bağlı)
+- **Secenekler** (Sorular'a bağlı)
+- **Cevaplar** (Sorular'a ve Secenekler'e bağlı)
+
+## Kurulum
+
+1. `Database` klasöründeki scriptleri SSMS'te sırayla çalıştırın:
+   `01_Tablolar.sql`, `02_Viewlar.sql`, `03_Prosedurler.sql`, `04_OrnekVeri.sql`
+2. Bağlantı cümlesi `src/AnketApp/appsettings.json` içinde. Ben `localhost\SQLEXPRESS` ve Windows Authentication kullandım, sizde farklıysa oradan değiştirin.
+3. Sonra:
 
 ```
-Controller  ->  Repository (IAnketRepository)  ->  Dapper  ->  SQL Server
-                                                      |-- SELECT : View
-                                                      |-- INSERT / UPDATE : Stored Procedure
-```
-
-- **SELECT işlemleri view'lardan yapılır:** `vw_AnketListesi`, `vw_AnketSorulari`, `vw_AnketSonuclari`
-- **INSERT / UPDATE işlemleri stored procedure ile yapılır:** `sp_AnketEkle`, `sp_AnketGuncelle`,
-  `sp_SoruEkle`, `sp_SoruGuncelle`, `sp_SecenekEkle`, `sp_CevapKaydet`
-- Repository, `Program.cs` içinde **Dependency Injection** ile kaydedilir ve controller'a constructor'dan gelir.
-- Soru + seçenek ekleme ve anket cevaplarını kaydetme **transaction** içinde yapılır (biri hata verirse hiçbiri kaydedilmez).
-- Tüm sorgular **parametreli**dir (SQL injection'a karşı güvenli).
-- `sp_CevapKaydet`, seçeneğin gerçekten o soruya ait olduğunu ve anketin aktif olduğunu kontrol eder; değilse `THROW` ile hata döner.
-
-## Veritabanı
-
-```
-Anketler (1) ──< Sorular (1) ──< Secenekler
-                     │                │
-                     └──< Cevaplar >──┘
-```
-
-| Tablo | Açıklama |
-|---|---|
-| Anketler | Anket adı, açıklaması, aktif/pasif durumu |
-| Sorular | Ankete bağlı sorular ve sıraları |
-| Secenekler | Soruya bağlı cevap seçenekleri |
-| Cevaplar | Kullanıcının hangi soruda hangi seçeneği seçtiği |
-
-Script'ler `Database` klasöründe, sırasıyla çalıştırılır:
-
-1. `01_Tablolar.sql` – tablolar, primary/foreign key'ler, default'lar, index'ler
-2. `02_Viewlar.sql` – view'lar
-3. `03_Prosedurler.sql` – stored procedure'ler
-4. `04_OrnekVeri.sql` – örnek anket (prosedürler kullanılarak eklenir)
-
-## Çalıştırma
-
-1. SQL Server'da `Database` klasöründeki script'leri sırayla çalıştırın (SSMS veya `sqlcmd`).
-2. Gerekirse `src/AnketApp/appsettings.json` içindeki `ConnectionStrings:AnketDb` değerini kendi sunucunuza göre düzenleyin
-   (varsayılan: `localhost\SQLEXPRESS`, Windows Authentication).
-3. Uygulamayı başlatın:
-
-```bash
 cd src/AnketApp
 dotnet run
 ```
 
-Tarayıcıda `http://localhost:5000` adresini açın.
+`http://localhost:5000` adresinden açılıyor.
 
-## Proje yapısı
+## Bu projede öğrendiklerim
 
-```
-Database/                 SQL script'leri (tablo, view, prosedür, örnek veri)
-src/AnketApp/
-  Controllers/            AnketController (listeleme, ekleme, düzenleme, doldurma, sonuçlar)
-  Data/                   SQL bağlantı fabrikası
-  Models/                 View satır modelleri ve form modelleri
-  Repositories/           IAnketRepository + Dapper ile AnketRepository
-  Views/Anket/            Razor sayfaları
-```
+- Dapper ile view'dan veri çekmek ve stored procedure çağırmak
+- Dapper'ın kolon adlarını sınıfın property'leriyle nasıl eşlediği
+- Foreign key'lerin hangi tabloya yazılacağı ve tabloların hangi sırayla oluşturulup silineceği
+- Transaction kullanımı
+- ASP.NET Core'da dependency injection
+
+## İleride eklemek istediklerim
+
+- Kullanıcı girişi
+- Soru ve seçenek silme
+- Sonuçları Excel'e aktarma
