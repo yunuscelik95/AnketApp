@@ -1,13 +1,11 @@
-using AnketApp.Data;
 using AnketApp.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-// Dependency Injection: bağlantı fabrikası tek örnek, repository her istekte yeni örnek
-builder.Services.AddSingleton<IDbBaglantiFabrikasi, SqlBaglantiFabrikasi>();
-builder.Services.AddScoped<IAnketRepository, AnketRepository>();
+// Controller'da AnketRepository istendiğinde .NET otomatik oluşturup verir
+builder.Services.AddScoped<AnketRepository>();
 
 var app = builder.Build();
 

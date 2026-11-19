@@ -7,147 +7,171 @@ namespace AnketApp.Controllers;
 
 public class AnketController : Controller
 {
-    private readonly IAnketRepository _repo;
+    private readonly AnketRepository _repo;
 
-    // Repository, Program.cs'teki DI kaydı sayesinde constructor'a otomatik gelir
-    public AnketController(IAnketRepository repo)
+    public AnketController(AnketRepository repo)
     {
         _repo = repo;
     }
 
+    // Anket listesi
     public async Task<IActionResult> Index()
     {
         var anketler = await _repo.TumunuGetirAsync();
         return View(anketler);
     }
 
-    public IActionResult Ekle() => View(new AnketFormModel());
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Ekle(AnketFormModel model)
+    // Yeni anket formu
+    public IActionResult Ekle()
     {
-        if (!ModelState.IsValid) return View(model);
-
-        var yeniId = await _repo.EkleAsync(model);
-        TempData["Mesaj"] = "Anket oluşturuldu. Şimdi soru ekleyebilirsiniz.";
-        return RedirectToAction(nameof(Detay), new { id = yeniId });
+        return View(new AnketFormModel());
     }
 
+    [HttpPost]
+    public async Task<IActionResult> Ekle(AnketFormModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        int yeniId = await _repo.EkleAsync(model);
+        TempData["Mesaj"] = "Anket oluşturuldu. Şimdi soru ekleyebilirsiniz.";
+        return RedirectToAction("Detay", new { id = yeniId });
+    }
+
+    // Anket düzenleme formu
     public async Task<IActionResult> Duzenle(int id)
     {
         var anket = await _repo.GetirAsync(id);
-        if (anket is null) return NotFound();
+        if (anket == null)
+            return NotFound();
 
-        return View(new AnketFormModel
-        {
-            Id = anket.Id, Ad = anket.Ad, Aciklama = anket.Aciklama, Aktif = anket.Aktif
-        });
+        var model = new AnketFormModel();
+        model.Id = anket.Id;
+        model.Ad = anket.Ad;
+        model.Aciklama = anket.Aciklama;
+        model.Aktif = anket.Aktif;
+        return View(model);
     }
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Duzenle(AnketFormModel model)
     {
-        if (!ModelState.IsValid) return View(model);
+        if (!ModelState.IsValid)
+            return View(model);
 
-        if (!await _repo.GuncelleAsync(model)) return NotFound();
+        bool guncellendi = await _repo.GuncelleAsync(model);
+        if (!guncellendi)
+            return NotFound();
 
         TempData["Mesaj"] = "Anket güncellendi.";
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction("Index");
     }
 
+    // Anketin soruları ve soru ekleme formu
     public async Task<IActionResult> Detay(int id)
     {
-        var model = await DetayModeliOlustur(id);
-        return model is null ? NotFound() : View(model);
+        var model = await DetayModeliGetir(id);
+        if (model == null)
+            return NotFound();
+
+        return View(model);
     }
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SoruEkle([Bind(Prefix = "YeniSoru")] SoruEkleModel yeniSoru)
+    public async Task<IActionResult> SoruEkle(AnketDetayModel gelen)
     {
+        var yeniSoru = gelen.YeniSoru;
         var secenekler = yeniSoru.SecenekListesi();
+
         if (secenekler.Count < 2)
             ModelState.AddModelError("YeniSoru.SeceneklerMetni", "En az iki farklı seçenek girin.");
 
         if (!ModelState.IsValid)
         {
-            var model = await DetayModeliOlustur(yeniSoru.AnketId);
-            if (model is null) return NotFound();
+            var model = await DetayModeliGetir(yeniSoru.AnketId);
             model.YeniSoru = yeniSoru;
-            return View(nameof(Detay), model);
+            return View("Detay", model);
         }
 
         await _repo.SoruEkleAsync(yeniSoru.AnketId, yeniSoru.Metin, secenekler);
         TempData["Mesaj"] = "Soru eklendi.";
-        return RedirectToAction(nameof(Detay), new { id = yeniSoru.AnketId });
+        return RedirectToAction("Detay", new { id = yeniSoru.AnketId });
     }
 
+    // Anket doldurma sayfası
     public async Task<IActionResult> Doldur(int id)
     {
-        var model = await DetayModeliOlustur(id);
-        if (model is null) return NotFound();
+        var model = await DetayModeliGetir(id);
+        if (model == null)
+            return NotFound();
+
         if (!model.Anket.Aktif)
         {
             TempData["Hata"] = "Bu anket aktif değil.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Index");
         }
+
         return View(model);
     }
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Doldur(int id, Dictionary<int, int> cevaplar)
     {
-        var model = await DetayModeliOlustur(id);
-        if (model is null) return NotFound();
+        var model = await DetayModeliGetir(id);
+        if (model == null)
+            return NotFound();
 
-        // Her soru cevaplanmış olmalı
-        if (model.Sorular.Any(s => !cevaplar.ContainsKey(s.Id)))
+        // Her soru cevaplanmış mı?
+        foreach (var soru in model.Sorular)
         {
-            ViewData["Hata"] = "Lütfen tüm soruları cevaplayın.";
-            ViewData["Secilenler"] = cevaplar;
-            return View(model);
+            if (!cevaplar.ContainsKey(soru.Id))
+            {
+                ViewData["Hata"] = "Lütfen tüm soruları cevaplayın.";
+                ViewData["Secilenler"] = cevaplar;
+                return View(model);
+            }
         }
 
         try
         {
             await _repo.CevaplariKaydetAsync(cevaplar);
         }
-        catch (SqlException ex) when (ex.Number is 50001 or 50002)
+        catch (SqlException ex)
         {
-            // Prosedürdeki THROW ile fırlatılan iş kuralı hataları
+            // Prosedürdeki THROW buraya düşer
             ViewData["Hata"] = ex.Message;
             return View(model);
         }
 
         TempData["Mesaj"] = "Katılımınız için teşekkürler!";
-        return RedirectToAction(nameof(Sonuclar), new { id });
+        return RedirectToAction("Sonuclar", new { id = id });
     }
 
+    // Sonuçlar sayfası
     public async Task<IActionResult> Sonuclar(int id)
     {
         var anket = await _repo.GetirAsync(id);
-        if (anket is null) return NotFound();
+        if (anket == null)
+            return NotFound();
 
-        return View(new AnketSonucModel
-        {
-            Anket = anket,
-            Satirlar = await _repo.SonuclariGetirAsync(id)
-        });
+        var model = new AnketSonucModel();
+        model.Anket = anket;
+        model.Satirlar = await _repo.SonuclariGetirAsync(id);
+        return View(model);
     }
 
-    private async Task<AnketDetayModel?> DetayModeliOlustur(int id)
+    // Detay ve Doldur sayfaları aynı bilgileri kullandığı için ortak metot
+    private async Task<AnketDetayModel> DetayModeliGetir(int id)
     {
         var anket = await _repo.GetirAsync(id);
-        if (anket is null) return null;
+        if (anket == null)
+            return null;
 
-        return new AnketDetayModel
-        {
-            Anket = anket,
-            Sorular = await _repo.SorulariGetirAsync(id),
-            YeniSoru = new SoruEkleModel { AnketId = id }
-        };
+        var model = new AnketDetayModel();
+        model.Anket = anket;
+        model.Sorular = await _repo.SorulariGetirAsync(id);
+        model.YeniSoru = new SoruEkleModel();
+        model.YeniSoru.AnketId = id;
+        return model;
     }
 }
