@@ -28,6 +28,7 @@ public class AnketController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult Ekle(AnketFormModel form)
     {
         if (!ModelState.IsValid)
@@ -54,6 +55,7 @@ public class AnketController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult Duzenle(AnketFormModel form)
     {
         if (!ModelState.IsValid)
@@ -78,6 +80,7 @@ public class AnketController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult SoruEkle(AnketDetayModel gelen)
     {
         var yeniSoru = gelen.YeniSoru;
@@ -115,6 +118,7 @@ public class AnketController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult Doldur(int id, Dictionary<int, int> cevaplar)
     {
         var detay = DetayModeliGetir(id);
