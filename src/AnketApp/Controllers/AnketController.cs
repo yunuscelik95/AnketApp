@@ -28,12 +28,12 @@ public class AnketController : Controller
     }
 
     [HttpPost]
-    public IActionResult Ekle(AnketFormModel model)
+    public IActionResult Ekle(AnketFormModel form)
     {
         if (!ModelState.IsValid)
-            return View(model);
+            return View(form);
 
-        int yeniId = _repo.Ekle(model);
+        int yeniId = _repo.Ekle(form);
         TempData["Mesaj"] = "Anket oluşturuldu. Şimdi soru ekleyebilirsiniz.";
         return RedirectToAction("Detay", new { id = yeniId });
     }
@@ -45,21 +45,21 @@ public class AnketController : Controller
         if (anket == null)
             return NotFound();
 
-        var model = new AnketFormModel();
-        model.Id = anket.Id;
-        model.Ad = anket.Ad;
-        model.Aciklama = anket.Aciklama;
-        model.Aktif = anket.Aktif;
-        return View(model);
+        var form = new AnketFormModel();
+        form.Id = anket.Id;
+        form.Ad = anket.Ad;
+        form.Aciklama = anket.Aciklama;
+        form.Aktif = anket.Aktif;
+        return View(form);
     }
 
     [HttpPost]
-    public IActionResult Duzenle(AnketFormModel model)
+    public IActionResult Duzenle(AnketFormModel form)
     {
         if (!ModelState.IsValid)
-            return View(model);
+            return View(form);
 
-        bool guncellendi = _repo.Guncelle(model);
+        bool guncellendi = _repo.Guncelle(form);
         if (!guncellendi)
             return NotFound();
 
@@ -70,11 +70,11 @@ public class AnketController : Controller
     // Anketin soruları ve soru ekleme formu
     public IActionResult Detay(int id)
     {
-        var model = DetayModeliGetir(id);
-        if (model == null)
+        var detay = DetayModeliGetir(id);
+        if (detay == null)
             return NotFound();
 
-        return View(model);
+        return View(detay);
     }
 
     [HttpPost]
@@ -88,9 +88,9 @@ public class AnketController : Controller
 
         if (!ModelState.IsValid)
         {
-            var model = DetayModeliGetir(yeniSoru.AnketId);
-            model.YeniSoru = yeniSoru;
-            return View("Detay", model);
+            var detay = DetayModeliGetir(yeniSoru.AnketId);
+            detay.YeniSoru = yeniSoru;
+            return View("Detay", detay);
         }
 
         _repo.SoruEkle(yeniSoru.AnketId, yeniSoru.Metin, secenekler);
@@ -101,34 +101,34 @@ public class AnketController : Controller
     // Anket doldurma sayfası
     public IActionResult Doldur(int id)
     {
-        var model = DetayModeliGetir(id);
-        if (model == null)
+        var detay = DetayModeliGetir(id);
+        if (detay == null)
             return NotFound();
 
-        if (!model.Anket.Aktif)
+        if (!detay.Anket.Aktif)
         {
             TempData["Hata"] = "Bu anket aktif değil.";
             return RedirectToAction("Index");
         }
 
-        return View(model);
+        return View(detay);
     }
 
     [HttpPost]
     public IActionResult Doldur(int id, Dictionary<int, int> cevaplar)
     {
-        var model = DetayModeliGetir(id);
-        if (model == null)
+        var detay = DetayModeliGetir(id);
+        if (detay == null)
             return NotFound();
 
         // Her soru cevaplanmış mı?
-        foreach (var soru in model.Sorular)
+        foreach (var soru in detay.Sorular)
         {
             if (!cevaplar.ContainsKey(soru.Id))
             {
                 ViewData["Hata"] = "Lütfen tüm soruları cevaplayın.";
                 ViewData["Secilenler"] = cevaplar;
-                return View(model);
+                return View(detay);
             }
         }
 
@@ -140,7 +140,7 @@ public class AnketController : Controller
         {
             // Prosedürdeki THROW buraya düşer
             ViewData["Hata"] = ex.Message;
-            return View(model);
+            return View(detay);
         }
 
         TempData["Mesaj"] = "Katılımınız için teşekkürler!";
@@ -154,10 +154,10 @@ public class AnketController : Controller
         if (anket == null)
             return NotFound();
 
-        var model = new AnketSonucModel();
-        model.Anket = anket;
-        model.Satirlar = _repo.SonuclariGetir(id);
-        return View(model);
+        var sonuc = new AnketSonucModel();
+        sonuc.Anket = anket;
+        sonuc.Satirlar = _repo.SonuclariGetir(id);
+        return View(sonuc);
     }
 
     // Detay ve Doldur sayfaları aynı bilgileri kullandığı için ortak metot
@@ -167,11 +167,11 @@ public class AnketController : Controller
         if (anket == null)
             return null;
 
-        var model = new AnketDetayModel();
-        model.Anket = anket;
-        model.Sorular = _repo.SorulariGetir(id);
-        model.YeniSoru = new SoruEkleModel();
-        model.YeniSoru.AnketId = id;
-        return model;
+        var detay = new AnketDetayModel();
+        detay.Anket = anket;
+        detay.Sorular = _repo.SorulariGetir(id);
+        detay.YeniSoru = new SoruEkleModel();
+        detay.YeniSoru.AnketId = id;
+        return detay;
     }
 }
