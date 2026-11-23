@@ -1,0 +1,49 @@
+@model List<Anket>
+@{
+    ViewData["Title"] = "Anketler";
+}
+
+<h1>Anketler</h1>
+
+<a class="btn btn-primary" asp-action="Ekle">Yeni Anket</a>
+
+<form asp-action="Index" method="get" class="mt-3 mb-3">
+    <input type="text" name="arama" value="@ViewData["Arama"]" placeholder="Anket ara" />
+    <button type="submit" class="btn btn-secondary btn-sm">Ara</button>
+</form>
+
+<table class="table">
+    <tr>
+        <th>Anket</th>
+        <th>Soru Sayısı</th>
+        <th>Durum</th>
+        <th>Tarih</th>
+        <th></th>
+    </tr>
+    @foreach (var a in Model)
+    {
+        <tr>
+            <td><a asp-action="Detay" asp-route-id="@a.Id">@a.Ad</a></td>
+            <td>@a.SoruSayisi</td>
+            <td>
+                @if (a.Aktif)
+                {
+                    <span>Aktif</span>
+                }
+                else
+                {
+                    <span>Pasif</span>
+                }
+            </td>
+            <td>@a.OlusturmaTarihi.ToString("dd.MM.yyyy")</td>
+            <td>
+                <a class="btn btn-success btn-sm" asp-action="Doldur" asp-route-id="@a.Id">Doldur</a>
+                <a class="btn btn-info btn-sm" asp-action="Sonuclar" asp-route-id="@a.Id">Sonuçlar</a>
+                <a class="btn btn-warning btn-sm" asp-action="Duzenle" asp-route-id="@a.Id">Düzenle</a>
+                <form asp-action="Sil" asp-route-id="@a.Id" method="post" style="display:inline">
+                    <button type="submit" class="btn btn-danger btn-sm">Sil</button>
+                </form>
+            </td>
+        </tr>
+    }
+</table>

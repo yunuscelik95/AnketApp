@@ -1,0 +1,24 @@
+@model AnketFormModel
+@{
+    ViewData["Title"] = "Yeni Anket";
+}
+
+<h1>Yeni Anket</h1>
+
+<form asp-action="Ekle" method="post">
+    <div class="mb-3">
+        <label>Anket adı</label>
+        <input asp-for="Ad" class="form-control" />
+        <span asp-validation-for="Ad" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label>Açıklama</label>
+        <textarea asp-for="Aciklama" class="form-control"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-secondary">Vazgeç</a>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

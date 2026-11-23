@@ -1,0 +1,36 @@
+@model AnketDetayModel
+@{
+    ViewData["Title"] = "Sonuçlar";
+}
+
+<h1>@Model.Anket.Ad - Sonuçlar</h1>
+
+@foreach (var soru in Model.Sorular)
+{
+    int toplam = 0;
+    foreach (var s in soru.Secenekler)
+    {
+        toplam = toplam + s.CevapSayisi;
+    }
+
+    <h4 class="mt-4">@soru.Metin (@toplam cevap)</h4>
+
+    <table class="table">
+        @foreach (var s in soru.Secenekler)
+        {
+            int yuzde = 0;
+            if (toplam > 0)
+            {
+                yuzde = s.CevapSayisi * 100 / toplam;
+            }
+
+            <tr>
+                <td>@s.Metin</td>
+                <td>@s.CevapSayisi</td>
+                <td>%@yuzde</td>
+            </tr>
+        }
+    </table>
+}
+
+<a class="btn btn-secondary" asp-action="Index">Geri</a>

@@ -1,0 +1,24 @@
+@model AnketDetayModel
+@{
+    ViewData["Title"] = Model.Anket.Ad;
+}
+
+<h1>@Model.Anket.Ad</h1>
+<p>@Model.Anket.Aciklama</p>
+
+<form asp-action="Doldur" asp-route-id="@Model.Anket.Id" method="post">
+    @foreach (var soru in Model.Sorular)
+    {
+        <p class="mt-3"><b>@soru.Metin</b></p>
+
+        @foreach (var s in soru.Secenekler)
+        {
+            <div>
+                <input type="radio" name="cevaplar[@soru.Id]" value="@s.Id" />
+                @s.Metin
+            </div>
+        }
+    }
+
+    <button type="submit" class="btn btn-success mt-3">Gönder</button>
+</form>

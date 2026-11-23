@@ -1,0 +1,51 @@
+@model AnketDetayModel
+@{
+    ViewData["Title"] = Model.Anket.Ad;
+}
+
+<h1>@Model.Anket.Ad</h1>
+<p>@Model.Anket.Aciklama</p>
+
+<a class="btn btn-success" asp-action="Doldur" asp-route-id="@Model.Anket.Id">Anketi Doldur</a>
+<a class="btn btn-info" asp-action="Sonuclar" asp-route-id="@Model.Anket.Id">Sonuçlar</a>
+
+<h3 class="mt-4">Sorular</h3>
+
+@foreach (var soru in Model.Sorular)
+{
+    <p>
+        <b>@soru.Metin</b>
+        <form asp-action="SoruSil" asp-route-id="@soru.Id" method="post" style="display:inline">
+            <input type="hidden" name="anketId" value="@Model.Anket.Id" />
+            <button type="submit" class="btn btn-danger btn-sm">Sil</button>
+        </form>
+    </p>
+    <ul>
+        @foreach (var s in soru.Secenekler)
+        {
+            <li>@s.Metin</li>
+        }
+    </ul>
+}
+
+<h3 class="mt-4">Soru Ekle</h3>
+
+<form asp-action="SoruEkle" method="post">
+    <input type="hidden" asp-for="YeniSoru.AnketId" />
+
+    <div class="mb-3">
+        <label>Soru</label>
+        <input asp-for="YeniSoru.Metin" class="form-control" />
+        <span asp-validation-for="YeniSoru.Metin" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label>Seçenekler (her satıra bir tane)</label>
+        <textarea asp-for="YeniSoru.SeceneklerMetni" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="YeniSoru.SeceneklerMetni" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Soruyu Ekle</button>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
